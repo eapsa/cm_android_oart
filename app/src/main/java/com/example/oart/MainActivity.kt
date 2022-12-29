@@ -24,12 +24,13 @@ class MainActivity : AppCompatActivity() {
 
         val mapsFragment = MapsFragment()
         val blankFragment = BlankFragment()
+        val blankFragment2 = BlankFragment2()
 
         binding.bottomNavigation.setOnNavigationItemSelectedListener {
             when (it.itemId) {
                 R.id.page_1 -> setCurrentFragment(mapsFragment)
                 R.id.page_2 -> setCurrentFragment(blankFragment)
-                R.id.page_3 -> setCurrentFragment(blankFragment)
+                R.id.page_3 -> setCurrentFragment(blankFragment2)
 
             }
             true
