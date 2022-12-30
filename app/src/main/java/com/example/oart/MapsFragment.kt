@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 
 import android.os.Bundle
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,23 +15,22 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.navigation.findNavController
 import com.google.android.gms.location.*
 
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.gms.maps.model.*
+import com.google.android.material.tabs.TabLayout.TabGravity
 
 class MapsFragment : Fragment() {
 
     lateinit var outputTextView: TextView
-    lateinit var foregroundOnlyLocationButton: Button
+    lateinit var startButton: Button
+    lateinit var pauseButton: Button
+    lateinit var resumeButton: Button
+    lateinit var terminateButton: Button
 
     lateinit var client: FusedLocationProviderClient
 
@@ -52,6 +52,13 @@ class MapsFragment : Fragment() {
     internal var mCurrLocationMarker: Marker? = null
     private var mMap: GoogleMap? = null
 
+    private var polyline: Polyline? = null
+    private var local: LatLng? = null
+
+    private var startFlag: Boolean = false
+
+    private var points: List<LatLng> = emptyList()
+
     private val callback = OnMapReadyCallback { googleMap ->
         /**
          * Manipulates the map once available.
@@ -63,9 +70,11 @@ class MapsFragment : Fragment() {
          * user has installed Google Play services and returned to the app.
          */
         mMap = googleMap
+
         val sydney = LatLng(-34.0, 151.0)
         googleMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+
     }
 
     override fun onCreateView(
@@ -74,40 +83,73 @@ class MapsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view : View = inflater.inflate(R.layout.fragment_maps, container, false)
-        foregroundOnlyLocationButton = view.findViewById<Button>(R.id.foreground_only_location_button)
 
-        client = LocationServices.getFusedLocationProviderClient(activity as MainActivity)
+//        foregroundOnlyLocationButton = view.findViewById<Button>(R.id.start_button)
+//
+//        client = LocationServices.getFusedLocationProviderClient(activity as MainActivity)
+//
+//        foregroundOnlyLocationButton.setOnClickListener {
+//            if(!flag) {
+//                if (ContextCompat.checkSelfPermission(
+//                        activity as MainActivity,
+//                        android.Manifest.permission.ACCESS_FINE_LOCATION
+//                    ) == PackageManager.PERMISSION_GRANTED &&
+//                    ContextCompat.checkSelfPermission(
+//                        activity as MainActivity,
+//                        android.Manifest.permission.ACCESS_COARSE_LOCATION
+//                    ) == PackageManager.PERMISSION_GRANTED
+//                ) {
+////                    getCurrentLocation()
+//                    startLocationUpdates()
+//                } else {
+//                    ActivityCompat.requestPermissions(
+//                        activity as MainActivity,
+//                        arrayOf(
+//                            android.Manifest.permission.ACCESS_FINE_LOCATION,
+//                            android.Manifest.permission.ACCESS_COARSE_LOCATION
+//                        ), 100
+//                    )
+//                }
+//                flag = !flag
+//                updateButtonState(flag)
+//            }else{
+//                stopLocationUpdates()
+//                flag = !flag
+//                updateButtonState(flag)
+//            }
+//
+//        }
 
-        foregroundOnlyLocationButton.setOnClickListener {
-            if(!flag) {
-                if (ContextCompat.checkSelfPermission(
-                        activity as MainActivity,
-                        android.Manifest.permission.ACCESS_FINE_LOCATION
-                    ) == PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(
-                        activity as MainActivity,
-                        android.Manifest.permission.ACCESS_COARSE_LOCATION
-                    ) == PackageManager.PERMISSION_GRANTED
-                ) {
-//                    getCurrentLocation()
-                    startLocationUpdates()
-                } else {
-                    ActivityCompat.requestPermissions(
-                        activity as MainActivity,
-                        arrayOf(
-                            android.Manifest.permission.ACCESS_FINE_LOCATION,
-                            android.Manifest.permission.ACCESS_COARSE_LOCATION
-                        ), 100
-                    )
-                }
-                flag = !flag
-                updateButtonState(flag)
-            }else{
-                stopLocationUpdates()
-                flag = !flag
-                updateButtonState(flag)
-            }
+        startButton = view.findViewById<Button>(R.id.start_button)
+        pauseButton = view.findViewById<Button>(R.id.pause_button)
+        resumeButton = view.findViewById<Button>(R.id.resume_button)
+        terminateButton = view.findViewById<Button>(R.id.terminate_button)
 
+        startButton.setOnClickListener {
+            startButton.visibility = View.GONE
+            pauseButton.visibility = View.VISIBLE
+            startFlag = true
+        }
+
+        pauseButton.setOnClickListener {
+            pauseButton.visibility = View.GONE
+            resumeButton.visibility = View.VISIBLE
+            terminateButton.visibility = View.VISIBLE
+            startFlag = false
+        }
+
+        resumeButton.setOnClickListener {
+            pauseButton.visibility = View.VISIBLE
+            resumeButton.visibility = View.GONE
+            terminateButton.visibility = View.GONE
+            startFlag = true
+        }
+        terminateButton.setOnClickListener {
+            startButton.visibility = View.VISIBLE
+            resumeButton.visibility = View.GONE
+            terminateButton.visibility = View.GONE
+            startFlag = false
+            polyline?.remove()
         }
         return view
     }
@@ -116,6 +158,37 @@ class MapsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
         mapFragment?.getMapAsync(callback)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        client = LocationServices.getFusedLocationProviderClient(activity as MainActivity)
+
+        if (ContextCompat.checkSelfPermission(
+                activity as MainActivity,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(
+                activity as MainActivity,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            startLocationUpdates()
+        } else {
+            ActivityCompat.requestPermissions(
+                activity as MainActivity,
+                arrayOf(
+                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                ), 100
+            )
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        polyline?.remove()
+        stopLocationUpdates()
     }
 
     fun onlocationchange(location: Location){
@@ -129,9 +202,26 @@ class MapsFragment : Fragment() {
         markerOptions.title("Current Position")
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
         mCurrLocationMarker = mMap!!.addMarker(markerOptions)
-
         mMap!!.moveCamera(CameraUpdateFactory.newLatLng(latLng))
-        mMap!!.animateCamera(CameraUpdateFactory.zoomTo(11f))
+        mMap!!.animateCamera(CameraUpdateFactory.zoomTo(18f))
+        if(local == null){
+            local = latLng
+            points += latLng
+        }
+        if(local != null && latLng != null && startFlag){
+            Log.d("po","pole")
+            points += latLng
+            polyline?.remove()
+            polyline = mMap!!.addPolyline(
+                PolylineOptions()
+                    .width(16F).color(ContextCompat.getColor(requireActivity(), R.color.red))
+                    .clickable(true)
+                    .addAll(points))
+//            polyline!!.points.add(latLng)
+            local = latLng
+
+        }
+
     }
 
     @SuppressLint("MissingPermission")
@@ -143,13 +233,5 @@ class MapsFragment : Fragment() {
 
     private fun stopLocationUpdates() {
         client.removeLocationUpdates(locationCallback)
-    }
-
-    private fun updateButtonState(trackingLocation: Boolean) {
-        if (trackingLocation) {
-            foregroundOnlyLocationButton.text = getString(R.string.stop_location_updates_button_text)
-        } else {
-            foregroundOnlyLocationButton.text = getString(R.string.start_location_updates_button_text)
-        }
     }
 }
