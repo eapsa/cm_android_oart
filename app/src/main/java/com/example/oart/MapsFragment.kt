@@ -3,26 +3,28 @@ package com.example.oart
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.location.Location
-import androidx.fragment.app.Fragment
-
 import android.os.Bundle
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.Chronometer
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import com.google.android.gms.location.*
-
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
-import com.google.android.material.tabs.TabLayout.TabGravity
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import kotlin.math.*
 
 class MapsFragment : Fragment() {
 
@@ -31,6 +33,7 @@ class MapsFragment : Fragment() {
     lateinit var pauseButton: Button
     lateinit var resumeButton: Button
     lateinit var terminateButton: Button
+    lateinit var chronometer: Chronometer
 
     lateinit var client: FusedLocationProviderClient
 
@@ -58,6 +61,13 @@ class MapsFragment : Fragment() {
     private var startFlag: Boolean = false
 
     private var points: List<LatLng> = emptyList()
+
+    private var timeSpent: Long = 0L
+
+    private var distance: Double = 0.0
+    private var speed: Double = 0.0
+
+    val db = Firebase.firestore
 
     private val callback = OnMapReadyCallback { googleMap ->
         /**
@@ -119,16 +129,22 @@ class MapsFragment : Fragment() {
 //            }
 //
 //        }
-
+        chronometer = view.findViewById(R.id.idCMmeter)
         startButton = view.findViewById<Button>(R.id.start_button)
         pauseButton = view.findViewById<Button>(R.id.pause_button)
         resumeButton = view.findViewById<Button>(R.id.resume_button)
         terminateButton = view.findViewById<Button>(R.id.terminate_button)
 
         startButton.setOnClickListener {
+            points = emptyList()
+            speed = 0.0
+            distance = 0.0
+            timeSpent = 0L
             startButton.visibility = View.GONE
             pauseButton.visibility = View.VISIBLE
             startFlag = true
+            chronometer.base = SystemClock.elapsedRealtime() + timeSpent
+            chronometer.start()
         }
 
         pauseButton.setOnClickListener {
@@ -136,6 +152,9 @@ class MapsFragment : Fragment() {
             resumeButton.visibility = View.VISIBLE
             terminateButton.visibility = View.VISIBLE
             startFlag = false
+            timeSpent = chronometer.base - SystemClock.elapsedRealtime()
+            Log.d("time",timeSpent.toString())
+            chronometer.stop()
         }
 
         resumeButton.setOnClickListener {
@@ -143,6 +162,8 @@ class MapsFragment : Fragment() {
             resumeButton.visibility = View.GONE
             terminateButton.visibility = View.GONE
             startFlag = true
+            chronometer.base = SystemClock.elapsedRealtime() + timeSpent
+            chronometer.start()
         }
         terminateButton.setOnClickListener {
             startButton.visibility = View.VISIBLE
@@ -150,6 +171,10 @@ class MapsFragment : Fragment() {
             terminateButton.visibility = View.GONE
             startFlag = false
             polyline?.remove()
+            calculateSpeed()
+            timeSpent = 0L
+            chronometer.base = SystemClock.elapsedRealtime() + timeSpent
+            chronometer.stop()
         }
         return view
     }
@@ -218,6 +243,7 @@ class MapsFragment : Fragment() {
                     .clickable(true)
                     .addAll(points))
 //            polyline!!.points.add(latLng)
+            calculateDistance(local!!, latLng)
             local = latLng
 
         }
@@ -233,5 +259,25 @@ class MapsFragment : Fragment() {
 
     private fun stopLocationUpdates() {
         client.removeLocationUpdates(locationCallback)
+    }
+
+    private fun calculateDistance(latLng1: LatLng, latLng2: LatLng){
+        var lat1 = Math.toRadians(latLng1.latitude)
+        var lon1 = Math.toRadians(latLng1.longitude)
+        var lat2 = Math.toRadians(latLng2.latitude)
+        var lon2 = Math.toRadians(latLng2.longitude)
+        var earthRadius = 6378137.0
+        distance += 2 * earthRadius *
+                asin(
+                    sqrt(
+                        (sin(lat2 - lat1) / 2).pow(2.0) +
+                                cos(lat1) * cos(lat2) * (sin(lon2 - lon1) / 2).pow(2.0)
+                    )
+                )
+    }
+
+    private fun calculateSpeed(){
+        if(distance == 0.0) speed = 0.0
+        else speed = ((abs(timeSpent)/1000)/60)/(distance/1000)
     }
 }

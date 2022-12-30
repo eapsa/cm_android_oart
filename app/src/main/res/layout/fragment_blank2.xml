@@ -20,7 +20,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            tools:visibility="gone" />
+            tools:visibility="visible" />
 
         <Button
             android:id="@+id/pause_button"
@@ -48,6 +48,7 @@
             app:layout_constraintVertical_bias="0.0" />
 
         <TableRow
+            android:id="@+id/tableRow"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
@@ -63,7 +64,7 @@
                 android:layout_marginBottom="32dp"
                 android:text="@string/resume_location_updates_button_text"
                 android:visibility="gone"
-                tools:visibility="visible" />
+                tools:visibility="gone" />
 
             <Button
                 android:id="@+id/terminate_button"
@@ -73,8 +74,23 @@
                 android:layout_marginBottom="32dp"
                 android:text="@string/terminate_location_updates_button_text"
                 android:visibility="gone"
-                tools:visibility="visible" />
+                tools:visibility="gone" />
         </TableRow>
+
+        <Chronometer
+            android:id="@+id/idCMmeter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_margin="100dp"
+            android:gravity="center"
+            android:padding="10dp"
+            android:textAlignment="center"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@+id/output_text_view"
+            tools:layout_editor_absoluteX="20dp" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>
