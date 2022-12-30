@@ -1,6 +1,7 @@
 package com.example.oart
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.location.Location
 import android.os.Bundle
 import android.os.Looper
@@ -11,6 +12,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import com.google.android.gms.location.*
+import com.google.firebase.auth.FirebaseAuth
 
 class BlankFragment2 : Fragment() {
 
@@ -86,7 +88,8 @@ class BlankFragment2 : Fragment() {
         startButton.setOnClickListener {
             startButton.visibility = View.GONE
             pauseButton.visibility = View.VISIBLE
-
+            FirebaseAuth.getInstance().signOut();
+            startActivity(Intent(activity as MainActivity, SignInActivity::class.java))
         }
 
         pauseButton.setOnClickListener {
