@@ -30,7 +30,7 @@ class BlankFragment : Fragment(){
         return view
     }
 
-    fun fillDataset(){
+    private fun fillDataset(){
         recyclerView.layoutManager = LinearLayoutManager(requireActivity())
         data = emptyList()
         val db = Firebase.firestore

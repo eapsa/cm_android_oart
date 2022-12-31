@@ -190,7 +190,7 @@ class MapsFragment : Fragment() {
             var builder = AlertDialog.Builder(requireActivity())
             builder.setTitle("Result")
             builder.setMessage("Save workout?")
-            builder.setCancelable(true)
+            builder.setCancelable(false)
             builder.setNegativeButton("Cancel", DialogInterface.OnClickListener(){ dialogInterface: DialogInterface, i: Int -> run { resetTimer() }})
             builder.setPositiveButton("OK", DialogInterface.OnClickListener(){ dialogInterface: DialogInterface, i: Int -> run { saveWorkout(); resetTimer() } }).show()
 

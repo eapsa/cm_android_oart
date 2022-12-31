@@ -63,4 +63,5 @@ dependencies {
     implementation 'com.google.android.gms:play-services-location:19.0.1'
     implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
     implementation 'com.github.denzcoskun:ImageSlideShow:0.1.0'
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
 }
