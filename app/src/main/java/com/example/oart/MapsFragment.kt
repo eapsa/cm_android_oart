@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.net.Uri
+import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
 import android.os.Looper
@@ -321,9 +322,6 @@ class MapsFragment : Fragment() {
 
 // Add a new document with a generated ID
 
-
-        storageRef = FirebaseStorage.getInstance().reference.child("Images")
-        storageRef = storageRef.child(System.currentTimeMillis().toString())
         if(imageUriList.isEmpty()){
             db.collection( FirebaseAuth.getInstance().currentUser?.email.toString())
                 .add(workout)
@@ -335,16 +333,26 @@ class MapsFragment : Fragment() {
                 }
         }
         else {
-            var listImages: List<String> = emptyList()
-            var last = imageUriList[imageUriList.size-1]
+            var listImages : List<String> = emptyList()
+            var last = imageUriList.size
+            var count = 0
+            var storagecount = 0
+            var storagecount2 = 0
+            var storageRef: List<StorageReference> = emptyList()
             for (imageUri in imageUriList) {
-                imageUri?.let {
-                    storageRef.putFile(it).addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
+                Log.d("IMAGEDATA",imageUri.toString())
 
-                            storageRef.downloadUrl.addOnSuccessListener { uri ->
+                storageRef += FirebaseStorage.getInstance().reference.child("Images/" + System.currentTimeMillis().toString())
+                storagecount += 1
+                imageUri?.let {
+                    storageRef[storagecount-1].putFile(it).addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            storagecount2 += 1
+                            storageRef[storagecount2-1].downloadUrl.addOnSuccessListener { uri ->
+                                Log.d("URI", uri.toString())
                                 listImages += uri.toString()
-                                if(imageUri == last){
+                                count += 1
+                                if(last == count){
                                     workout["images"] = listImages
                                     db.collection(FirebaseAuth.getInstance().currentUser?.email.toString())
                                         .add(workout)
@@ -434,5 +442,5 @@ class MapsFragment : Fragment() {
         dialog.show()
     }
 
-    private lateinit var storageRef: StorageReference
+
 }
