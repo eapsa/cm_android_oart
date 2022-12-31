@@ -1,12 +1,19 @@
 package com.example.oart
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.ContentValues
 import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Looper
 import android.os.SystemClock
+import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -14,9 +21,11 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Chronometer
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.fragment.app.Fragment
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -25,8 +34,12 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
+import kotlinx.coroutines.tasks.await
 import kotlin.math.*
 
 class MapsFragment : Fragment() {
@@ -143,6 +156,8 @@ class MapsFragment : Fragment() {
             speed = 0.0
             distance = 0.0
             timeSpent = 0L
+            imageUriList = emptyList()
+            imageUri = null
             startButton.visibility = View.GONE
             pauseButton.visibility = View.VISIBLE
             startFlag = true
@@ -167,6 +182,7 @@ class MapsFragment : Fragment() {
             startFlag = true
             chronometer.base = SystemClock.elapsedRealtime() + timeSpent
             chronometer.start()
+            requestCameraPermission()
         }
         terminateButton.setOnClickListener {
             startButton.visibility = View.VISIBLE
@@ -181,7 +197,7 @@ class MapsFragment : Fragment() {
             builder.setMessage("Save workout?")
             builder.setCancelable(true)
             builder.setNegativeButton("Cancel", DialogInterface.OnClickListener(){ dialogInterface: DialogInterface, i: Int -> run { resetTimer() }})
-            builder.setPositiveButton("OK", DialogInterface.OnClickListener(){ dialogInterface: DialogInterface, i: Int -> run { saveWorkout();resetTimer() } }).show()
+            builder.setPositiveButton("OK", DialogInterface.OnClickListener(){ dialogInterface: DialogInterface, i: Int -> run { saveWorkout(); resetTimer() } }).show()
 
         }
         return view
@@ -304,13 +320,119 @@ class MapsFragment : Fragment() {
         )
 
 // Add a new document with a generated ID
-        db.collection( FirebaseAuth.getInstance().currentUser?.email.toString())
-            .add(workout)
-            .addOnSuccessListener { documentReference ->
-                Log.d("Save", "DocumentSnapshot added with ID: ${documentReference.id}")
+
+
+        storageRef = FirebaseStorage.getInstance().reference.child("Images")
+        storageRef = storageRef.child(System.currentTimeMillis().toString())
+        if(imageUriList.isEmpty()){
+            db.collection( FirebaseAuth.getInstance().currentUser?.email.toString())
+                .add(workout)
+                .addOnSuccessListener { documentReference ->
+                    Log.d("Save", "DocumentSnapshot added with ID: ${documentReference.id}")
+                }
+                .addOnFailureListener { e ->
+                    Log.w("Save", "Error adding document", e)
+                }
+        }
+        else {
+            var listImages: List<String> = emptyList()
+            var last = imageUriList[imageUriList.size-1]
+            for (imageUri in imageUriList) {
+                imageUri?.let {
+                    storageRef.putFile(it).addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+
+                            storageRef.downloadUrl.addOnSuccessListener { uri ->
+                                listImages += uri.toString()
+                                if(imageUri == last){
+                                    workout["images"] = listImages
+                                    db.collection(FirebaseAuth.getInstance().currentUser?.email.toString())
+                                        .add(workout)
+                                        .addOnSuccessListener { documentReference ->
+                                            Log.d("Save", "DocumentSnapshot added with ID: ${documentReference.id}")
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Log.w("Save", "Error adding document", e)
+                                        }
+                                }
+                            }
+                        } else {
+                            Toast.makeText(
+                                requireActivity(),
+                                task.exception?.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
             }
-            .addOnFailureListener { e ->
-                Log.w("Save", "Error adding document", e)
-            }
+
+        }
+        imageUriList = emptyList()
+        imageUri = null
     }
+
+    val CAMERA_PERMISSION_CODE = 1000;
+    private fun requestCameraPermission(): Boolean {
+        var permissionGranted = false
+// If system os is Marshmallow or Above, we need to request runtime permission
+            val cameraPermissionNotGranted = checkSelfPermission(activity as MainActivity, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED
+            if (cameraPermissionNotGranted){
+                val permission = arrayOf(Manifest.permission.CAMERA)
+                // Display permission dialog
+                requestPermissions(permission, CAMERA_PERMISSION_CODE)
+            }
+            else{
+                // Permission already granted
+                permissionGranted = true
+                openCameraInterface()
+            }
+
+        return permissionGranted
+    }
+
+    private val IMAGE_CAPTURE_CODE = 1001
+    private var imageUriList: List<Uri?> = emptyList()
+    private var imageUri: Uri? = null
+    private fun openCameraInterface() {
+        val values = ContentValues()
+        values.put(MediaStore.Images.Media.TITLE, "Take a picture")
+        values.put(MediaStore.Images.Media.DESCRIPTION, "take_picture_description")
+        imageUri = activity?.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
+        startActivityForResult(intent, IMAGE_CAPTURE_CODE)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        if (requestCode === CAMERA_PERMISSION_CODE) {
+            if (grantResults.size === 1 && grantResults[0] ==    PackageManager.PERMISSION_GRANTED){
+                openCameraInterface()
+            }
+            else{
+                showAlert("Camera permission was denied. Unable to take a picture.");
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == Activity.RESULT_OK){
+            showAlert( imageUri.toString())
+            imageUriList += imageUri
+        }
+        else {
+            showAlert("Failed to take camera picture")
+        }
+    }
+
+    private fun showAlert(message: String) {
+        val builder = AlertDialog.Builder(activity as MainActivity)
+        builder.setMessage(message)
+        builder.setPositiveButton("OK", null)
+        val dialog = builder.create()
+        dialog.show()
+    }
+
+    private lateinit var storageRef: StorageReference
 }
