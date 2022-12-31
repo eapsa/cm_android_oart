@@ -34,6 +34,30 @@ class BlankFragment : Fragment(){
         recyclerView.layoutManager = LinearLayoutManager(requireActivity())
         data = emptyList()
         val db = Firebase.firestore
+        db.collection(FirebaseAuth.getInstance().currentUser?.email.toString()+"-friends")
+            .get()
+            .addOnSuccessListener { result ->
+                for (document1 in result) {
+                    db.collection(document1.data["friend"].toString())
+                        .get()
+                        .addOnSuccessListener { result ->
+                            for (document in result) {
+                                data += Item(document, document1.data["friend"].toString())
+                                Log.d(TAG, "${document.id} => ${document.data}")
+                            }
+
+                            val adapter = ItemAdapter(requireActivity(),data)
+                            recyclerView.adapter = adapter
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.w(TAG, "Error getting documents.", exception)
+                        }
+                }
+
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting documents.", exception)
+            }
         db.collection(FirebaseAuth.getInstance().currentUser?.email.toString())
             .get()
             .addOnSuccessListener { result ->
