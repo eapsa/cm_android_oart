@@ -17,6 +17,9 @@ class Item(private val document: QueryDocumentSnapshot, private val user: String
         if(document.data.containsKey("images")){
             imageList = document.data["images"] as List<String>
         }
+    }
 
+    override fun toString(): String {
+        return timestamp
     }
 }
