@@ -8,13 +8,12 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.oart.adapter.ItemAdapter
 import com.example.oart.item.Item
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import java.util.*
-import java.util.Arrays.sort
 
 private const val TAG = "BlankFragment"
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
@@ -22,11 +21,19 @@ private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 class BlankFragment : Fragment(){
     var data: List<Item> = emptyList()
     private lateinit var recyclerView: RecyclerView
+    private lateinit var refreshLayout: SwipeRefreshLayout
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         var view: View = inflater.inflate(R.layout.fragment_blank, container, false)
+        refreshLayout = view.findViewById(R.id.layout)
+        refreshLayout.setOnRefreshListener {
+            refreshLayout.isRefreshing = true
+            fillDataset()
+            refreshLayout.isRefreshing = false
+        }
+
         recyclerView = view.findViewById(R.id.feed)
         fillDataset()
         return view
@@ -34,6 +41,8 @@ class BlankFragment : Fragment(){
 
     private fun fillDataset(){
         recyclerView.layoutManager = LinearLayoutManager(requireActivity())
+        val adapter = ItemAdapter(requireActivity(),data)
+        recyclerView.adapter = adapter
         data = emptyList()
         val db = Firebase.firestore
         db.collection(FirebaseAuth.getInstance().currentUser?.email.toString()+"-friends")
@@ -45,11 +54,12 @@ class BlankFragment : Fragment(){
                         .addOnSuccessListener { result ->
                             for (document in result) {
                                 data += Item(document, document1.data["friend"].toString())
-                                Log.d(TAG, "${document.id} => ${document.data}")
+                                Log.d(TAG, "${document.id} => ${document.data["timestamp"]}")
                             }
-
-                            val adapter = ItemAdapter(requireActivity(),data)
-                            recyclerView.adapter = adapter
+                            Log.d(TAG,data.size.toString())
+                            data.sortedBy { it.timestamp }
+                            recyclerView.adapter = ItemAdapter(requireActivity(),data)
+                            recyclerView.adapter?.notifyDataSetChanged()
                         }
                         .addOnFailureListener { exception ->
                             Log.w(TAG, "Error getting documents.", exception)
@@ -60,23 +70,20 @@ class BlankFragment : Fragment(){
                     .addOnSuccessListener { result ->
                         for (document in result) {
                             data += Item(document, FirebaseAuth.getInstance().currentUser?.email.toString())
-                            Log.d(TAG, "${document.id} => ${document.data}")
+                            Log.d(TAG, "${document.id} => ${document.data["timestamp"]}")
                         }
-
+                        Log.d(TAG,data.size.toString())
                         data.sortedBy { it.timestamp }
-                        val adapter = ItemAdapter(requireActivity(),data)
-                        recyclerView.adapter = adapter
+                        recyclerView.adapter = ItemAdapter(requireActivity(),data)
+                        recyclerView.adapter?.notifyDataSetChanged()
 
                     }
                     .addOnFailureListener { exception ->
                         Log.w(TAG, "Error getting documents.", exception)
                     }
-
             }
             .addOnFailureListener { exception ->
                 Log.w(TAG, "Error getting documents.", exception)
             }
-
-
     }
 }
