@@ -311,7 +311,7 @@ class MapsFragment : Fragment() {
             "timestamp" to LocalDateTime.now().toString(),
             "distance" to distance,
             "speed" to speed,
-            "time" to timeSpent.toInt(),
+            "time" to timeSpent.toInt()*-1,
             "cords" to points,
         )
 
