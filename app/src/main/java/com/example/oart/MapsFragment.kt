@@ -1,6 +1,7 @@
 package com.example.oart
 
 import android.annotation.SuppressLint
+import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
@@ -13,6 +14,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Chronometer
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -22,6 +24,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlin.math.*
@@ -171,12 +174,22 @@ class MapsFragment : Fragment() {
             terminateButton.visibility = View.GONE
             startFlag = false
             polyline?.remove()
-            calculateSpeed()
-            timeSpent = 0L
-            chronometer.base = SystemClock.elapsedRealtime() + timeSpent
             chronometer.stop()
+            calculateSpeed()
+            var builder = AlertDialog.Builder(requireActivity())
+            builder.setTitle("Result")
+            builder.setMessage("Save workout?")
+            builder.setCancelable(true)
+            builder.setNegativeButton("Cancel", DialogInterface.OnClickListener(){ dialogInterface: DialogInterface, i: Int -> run { resetTimer() }})
+            builder.setPositiveButton("OK", DialogInterface.OnClickListener(){ dialogInterface: DialogInterface, i: Int -> run { saveWorkout();resetTimer() } }).show()
+
         }
         return view
+    }
+
+    private fun resetTimer(){
+        timeSpent = 0L
+        chronometer.base = SystemClock.elapsedRealtime() + timeSpent
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -279,5 +292,25 @@ class MapsFragment : Fragment() {
     private fun calculateSpeed(){
         if(distance == 0.0) speed = 0.0
         else speed = ((abs(timeSpent)/1000)/60)/(distance/1000)
+    }
+
+    private fun saveWorkout(){
+        // Create a new user with a first and last name
+        val workout = hashMapOf(
+            "distance" to distance,
+            "speed" to speed,
+            "time" to timeSpent.toInt(),
+            "cords" to points,
+        )
+
+// Add a new document with a generated ID
+        db.collection( FirebaseAuth.getInstance().currentUser?.email.toString())
+            .add(workout)
+            .addOnSuccessListener { documentReference ->
+                Log.d("Save", "DocumentSnapshot added with ID: ${documentReference.id}")
+            }
+            .addOnFailureListener { e ->
+                Log.w("Save", "Error adding document", e)
+            }
     }
 }

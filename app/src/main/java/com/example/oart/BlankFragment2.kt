@@ -88,8 +88,8 @@ class BlankFragment2 : Fragment() {
         startButton.setOnClickListener {
             startButton.visibility = View.GONE
             pauseButton.visibility = View.VISIBLE
-            FirebaseAuth.getInstance().signOut();
-            startActivity(Intent(activity as MainActivity, SignInActivity::class.java))
+//            FirebaseAuth.getInstance().signOut();
+//            startActivity(Intent(activity as MainActivity, SignInActivity::class.java))
         }
 
         pauseButton.setOnClickListener {
