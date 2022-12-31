@@ -25,8 +25,22 @@ tools:context=".BlankFragment2">
         app:layout_constraintVertical_bias="0.0"
         tools:context=".MapsFragment" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/cameraButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:clickable="true"
+        android:contentDescription="@string/camera"
+        android:visibility="gone"
+        android:src="@drawable/ic_baseline_camera_alt_24"
+        app:layout_constraintBottom_toTopOf="@+id/cardView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:focusable="true" />
 
     <androidx.cardview.widget.CardView
+        android:id="@+id/cardView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@drawable/background_border"

@@ -9,7 +9,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.net.Uri
-import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
 import android.os.Looper
@@ -21,8 +20,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Chronometer
-import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -34,30 +33,30 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
-import kotlinx.coroutines.tasks.await
+import java.time.LocalDateTime
 import kotlin.math.*
 
 class MapsFragment : Fragment() {
 
-    lateinit var outputTextView: TextView
     lateinit var startButton: Button
     lateinit var pauseButton: Button
     lateinit var resumeButton: Button
     lateinit var terminateButton: Button
+    lateinit var cameraButton: FloatingActionButton
     lateinit var chronometer: Chronometer
 
     lateinit var client: FusedLocationProviderClient
 
-    var locationCallback: LocationCallback = object: LocationCallback(){
+    private var locationCallback: LocationCallback = object: LocationCallback(){
         override fun onLocationResult(p0: LocationResult) {
             super.onLocationResult(p0)
-            var location1: Location = p0.lastLocation
+            val location1: Location = p0.lastLocation
             onlocationchange(location1)
         }
     }
@@ -67,9 +66,7 @@ class MapsFragment : Fragment() {
         .setInterval(10000)
         .setFastestInterval(1000)
 
-    var flag: Boolean = false
-
-    internal var mCurrLocationMarker: Marker? = null
+    private var mCurrLocationMarker: Marker? = null
     private var mMap: GoogleMap? = null
 
     private var polyline: Polyline? = null
@@ -87,21 +84,11 @@ class MapsFragment : Fragment() {
     val db = Firebase.firestore
 
     private val callback = OnMapReadyCallback { googleMap ->
-        /**
-         * Manipulates the map once available.
-         * This callback is triggered when the map is ready to be used.
-         * This is where we can add markers or lines, add listeners or move the camera.
-         * In this case, we just add a marker near Sydney, Australia.
-         * If Google Play services is not installed on the device, the user will be prompted to
-         * install it inside the SupportMapFragment. This method will only be triggered once the
-         * user has installed Google Play services and returned to the app.
-         */
         mMap = googleMap
 
         val sydney = LatLng(-34.0, 151.0)
         googleMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
-
     }
 
     override fun onCreateView(
@@ -147,10 +134,15 @@ class MapsFragment : Fragment() {
 //
 //        }
         chronometer = view.findViewById(R.id.idCMmeter)
-        startButton = view.findViewById<Button>(R.id.start_button)
-        pauseButton = view.findViewById<Button>(R.id.pause_button)
-        resumeButton = view.findViewById<Button>(R.id.resume_button)
-        terminateButton = view.findViewById<Button>(R.id.terminate_button)
+        startButton = view.findViewById(R.id.start_button)
+        pauseButton = view.findViewById(R.id.pause_button)
+        resumeButton = view.findViewById(R.id.resume_button)
+        terminateButton = view.findViewById(R.id.terminate_button)
+        cameraButton = view.findViewById(R.id.cameraButton)
+
+        cameraButton.setOnClickListener {
+            requestCameraPermission()
+        }
 
         startButton.setOnClickListener {
             points = emptyList()
@@ -170,6 +162,7 @@ class MapsFragment : Fragment() {
             pauseButton.visibility = View.GONE
             resumeButton.visibility = View.VISIBLE
             terminateButton.visibility = View.VISIBLE
+            cameraButton.visibility = View.VISIBLE
             startFlag = false
             timeSpent = chronometer.base - SystemClock.elapsedRealtime()
             Log.d("time",timeSpent.toString())
@@ -180,15 +173,16 @@ class MapsFragment : Fragment() {
             pauseButton.visibility = View.VISIBLE
             resumeButton.visibility = View.GONE
             terminateButton.visibility = View.GONE
+            cameraButton.visibility = View.GONE
             startFlag = true
             chronometer.base = SystemClock.elapsedRealtime() + timeSpent
             chronometer.start()
-            requestCameraPermission()
         }
         terminateButton.setOnClickListener {
             startButton.visibility = View.VISIBLE
             resumeButton.visibility = View.GONE
             terminateButton.visibility = View.GONE
+            cameraButton.visibility = View.GONE
             startFlag = false
             polyline?.remove()
             chronometer.stop()
@@ -247,7 +241,6 @@ class MapsFragment : Fragment() {
     }
 
     fun onlocationchange(location: Location){
-//        outputTextView.text = location1.toString()
         if (mCurrLocationMarker != null) {
             mCurrLocationMarker!!.remove()
         }
@@ -311,9 +304,11 @@ class MapsFragment : Fragment() {
         else speed = ((abs(timeSpent)/1000)/60)/(distance/1000)
     }
 
+
     private fun saveWorkout(){
         // Create a new user with a first and last name
         val workout = hashMapOf(
+            "timestamp" to LocalDateTime.now().toString(),
             "distance" to distance,
             "speed" to speed,
             "time" to timeSpent.toInt(),
@@ -426,7 +421,7 @@ class MapsFragment : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == Activity.RESULT_OK){
-            showAlert( imageUri.toString())
+//            showAlert( imageUri.toString())
             imageUriList += imageUri
         }
         else {
