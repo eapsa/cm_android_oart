@@ -39,8 +39,10 @@ class ItemAdapter(private val context: Context, private val dataset: List<Item>)
         for(img in item.imageList){
             images.add(SlideModel(img))
         }
+        if(item.imageList.isNotEmpty())  holder.imageSlider.setImageList(images)
+        else holder.imageSlider.visibility = View.GONE
 
-        holder.imageSlider.setImageList(images)
+
     }
 
     override fun getItemCount() = dataset.size

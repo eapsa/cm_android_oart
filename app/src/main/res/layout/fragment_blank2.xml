@@ -1,128 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/profile_refresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/loc"
-    tools:context=".BlankFragment2">
+    tools:context=".MainActivity">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <TextView
-            android:id="@+id/output_text_view"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:background="@drawable/background_border"
-            android:padding="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="1.0" />
-
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardView"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-            <TableLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TableRow
-                    android:id="@+id/tableRow2"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center_horizontal">
-
-                    <TextView
-                        android:id="@+id/textView2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginRight="32dp"
-                        android:padding="10dp"
-                        android:text="@string/Init_speed"
-                        android:textAlignment="center"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-
-                    <Chronometer
-                        android:id="@+id/idCMmeter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="32dp"
-                        android:padding="10dp"
-                        android:textAlignment="center"
-                        android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-                </TableRow>
-
-                <TableRow
-                    android:id="@+id/tableRow"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center_horizontal">
-
-                    <Button
-                        android:id="@+id/resume_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginRight="32dp"
-                        android:layout_marginBottom="32dp"
-                        android:text="@string/resume_location_updates_button_text"
-                        android:visibility="gone"
-                        tools:visibility="visible" />
-
-                    <Button
-                        android:id="@+id/terminate_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="32dp"
-                        android:layout_marginBottom="32dp"
-                        android:text="@string/terminate_location_updates_button_text"
-                        android:visibility="gone"
-                        tools:visibility="visible" />
-
-                    <Button
-                        android:id="@+id/start_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="32dp"
-                        android:text="@string/start_location_updates_button_text"
-                        tools:visibility="visible" />
-
-                    <Button
-                        android:id="@+id/pause_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="32dp"
-                        android:text="@string/pause_location_updates_button_text"
-                        android:visibility="gone" />
-                </TableRow>
-            </TableLayout>
-
-        </androidx.cardview.widget.CardView>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/cameraButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:clickable="true"
-            android:contentDescription="@string/camera"
-            android:src="@drawable/ic_baseline_camera_alt_24"
-            app:layout_constraintBottom_toTopOf="@+id/cardView"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</FrameLayout>
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/profile"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scrollbars="vertical"
+        app:layoutManager="LinearLayoutManager"
+        />
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
