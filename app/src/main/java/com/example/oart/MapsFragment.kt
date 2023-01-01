@@ -87,10 +87,8 @@ class MapsFragment : Fragment() {
 
     private val callback = OnMapReadyCallback { googleMap ->
         mMap = googleMap
-
-        val sydney = LatLng(-34.0, 151.0)
-        googleMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+        val aveiro = LatLng(40.63290338497802, -8.65919152474748)
+        googleMap.moveCamera(CameraUpdateFactory.newLatLng(aveiro))
     }
 
     override fun onCreateView(
