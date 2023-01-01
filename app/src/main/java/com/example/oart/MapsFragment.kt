@@ -20,6 +20,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Chronometer
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
@@ -50,6 +51,7 @@ class MapsFragment : Fragment() {
     lateinit var terminateButton: Button
     lateinit var cameraButton: FloatingActionButton
     lateinit var chronometer: Chronometer
+    lateinit var distanceText: TextView
 
     lateinit var client: FusedLocationProviderClient
 
@@ -139,6 +141,7 @@ class MapsFragment : Fragment() {
         resumeButton = view.findViewById(R.id.resume_button)
         terminateButton = view.findViewById(R.id.terminate_button)
         cameraButton = view.findViewById(R.id.cameraButton)
+        distanceText = view.findViewById(R.id.textView2)
 
         cameraButton.setOnClickListener {
             requestCameraPermission()
@@ -186,6 +189,7 @@ class MapsFragment : Fragment() {
             startFlag = false
             polyline?.remove()
             chronometer.stop()
+            distanceText.text = "0.0"
             calculateSpeed()
             var builder = AlertDialog.Builder(requireActivity())
             builder.setTitle("Result")
@@ -267,6 +271,7 @@ class MapsFragment : Fragment() {
                     .addAll(points))
 //            polyline!!.points.add(latLng)
             calculateDistance(local!!, latLng)
+            distanceText.text = (((distance /1000)*100).roundToInt().toDouble()/100).toString()
             local = latLng
 
         }

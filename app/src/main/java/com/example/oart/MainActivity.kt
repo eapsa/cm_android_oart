@@ -123,11 +123,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addFriend(friend:String){
-        val friendMap = hashMapOf("friend" to friend)
-
+        val friendMap1 = hashMapOf("friend" to friend)
+        val friendMap2 = hashMapOf("friend" to FirebaseAuth.getInstance().currentUser?.email.toString())
         val db = Firebase.firestore
         db.collection(FirebaseAuth.getInstance().currentUser?.email.toString()+"-friends")
-            .add(friendMap)
+            .add(friendMap1)
+            .addOnSuccessListener { documentReference ->
+                Log.d("Save", "DocumentSnapshot added with ID: ${documentReference.id}")
+            }
+            .addOnFailureListener { e ->
+                Log.w("Save", "Error adding document", e)
+            }
+        db.collection(friend+"-friends")
+            .add(friendMap2)
             .addOnSuccessListener { documentReference ->
                 Log.d("Save", "DocumentSnapshot added with ID: ${documentReference.id}")
             }

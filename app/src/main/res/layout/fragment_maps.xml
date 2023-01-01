@@ -63,28 +63,56 @@ tools:context=".BlankFragment2">
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent">
 
-                <TextView
-                    android:id="@+id/textView2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginRight="10dp"
-                    android:text="@string/Init_speed"
-                    android:padding="10dp"
-                    android:textAlignment="center"
-                    android:textColor="@color/black"
-                    android:textSize="50sp"
-                    android:textStyle="bold"/>
 
-                <Chronometer
-                    android:id="@+id/idCMmeter"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="10dp"
-                    android:padding="10dp"
-                    android:textAlignment="center"
-                    android:textColor="@color/black"
-                    android:textSize="50sp"
-                    android:textStyle="bold" />
+                    android:orientation="vertical"
+                    android:layout_margin="5dp">
+
+                    <TextView
+                        android:id="@+id/textView2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="10dp"
+                        android:text="@string/Init_speed"
+                        android:textAlignment="center"
+                        android:textSize="50sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/distance_string"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:text="Distance(km)" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:layout_margin="5dp">
+
+                    <Chronometer
+                        android:id="@+id/idCMmeter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:textAlignment="center"
+                        android:textSize="50sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/duration_string"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:text="Duration" />
+                </LinearLayout>
+
+
+
+
 
                 <!--        <Chronometer-->
                 <!--            android:id="@+id/idCMmeter"-->
